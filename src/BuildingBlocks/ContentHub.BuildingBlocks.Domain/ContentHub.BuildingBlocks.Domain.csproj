@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.BuildingBlocks.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,19 @@
+# .NET
+bin/
+obj/
+*.user
+artifacts/
+# Node / Next / Vercel
+node_modules/
+.next/
+.vercel/
+dist/
+# Env
+.env
+.env.local
+appsettings.*.Local.json
+
+# IDE / geçici
+.vs/
+_to_delete/
+*.fuse_hidden*

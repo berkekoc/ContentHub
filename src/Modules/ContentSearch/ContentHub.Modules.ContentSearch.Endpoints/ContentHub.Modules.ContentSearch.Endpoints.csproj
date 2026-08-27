@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.Modules.ContentSearch.Endpoints</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ContentHub.Modules.ContentSearch.Application\ContentHub.Modules.ContentSearch.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\ContentHub.BuildingBlocks.Application\ContentHub.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+</Project>

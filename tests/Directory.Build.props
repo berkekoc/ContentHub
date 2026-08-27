@@ -1,0 +1,12 @@
+<Project>
+  <!-- Kök Directory.Build.props otomatik içe alınmaz (en yakın dosya kazanır); elle import edilir. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <!-- Test projelerinde analizör (xUnit/CA) uyarıları derlemeyi kırmasın. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CA1707;CA2007;xUnit1013;CA1861;CA1515</NoWarn>
+    <IsPackable>false</IsPackable>
+    <!-- Test araçlarının (WireMock/Testcontainers) transitive advisory'leri üretime gitmez -->
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+</Project>

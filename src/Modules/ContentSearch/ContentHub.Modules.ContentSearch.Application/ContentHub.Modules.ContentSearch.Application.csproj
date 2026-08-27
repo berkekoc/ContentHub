@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.Modules.ContentSearch.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ContentHub.Modules.ContentSearch.Domain\ContentHub.Modules.ContentSearch.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\ContentHub.BuildingBlocks.Application\ContentHub.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ContentHub.Modules.ContentSearch.Application.UnitTests" />
+  </ItemGroup>
+</Project>

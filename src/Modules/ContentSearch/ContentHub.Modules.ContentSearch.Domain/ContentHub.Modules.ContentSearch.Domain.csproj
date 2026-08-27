@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.Modules.ContentSearch.Domain</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\ContentHub.BuildingBlocks.Domain\ContentHub.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+</Project>

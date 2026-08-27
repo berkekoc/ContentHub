@@ -1,0 +1,13 @@
+{
+  "name": "contenthub-mock-providers",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ContentHub için sahte içerik sağlayıcıları (JSON + XML). Vercel serverless + yerel standalone sunucu.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

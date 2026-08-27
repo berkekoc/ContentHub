@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.Api</RootNamespace>
+    <UserSecretsId>contenthub-api</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\ContentSearch\ContentHub.Modules.ContentSearch.Endpoints\ContentHub.Modules.ContentSearch.Endpoints.csproj" />
+    <ProjectReference Include="..\..\Modules\ContentSearch\ContentHub.Modules.ContentSearch.Infrastructure\ContentHub.Modules.ContentSearch.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\ContentHub.BuildingBlocks.Infrastructure\ContentHub.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\ContentHub.BuildingBlocks.Application\ContentHub.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+</Project>

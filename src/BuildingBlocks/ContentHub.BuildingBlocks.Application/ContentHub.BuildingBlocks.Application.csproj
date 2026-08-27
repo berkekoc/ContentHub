@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ContentHub.BuildingBlocks.Application</RootNamespace>
+  </PropertyGroup>
+  <!-- IModule.MapEndpoints(IEndpointRouteBuilder) minimal-API tiplerini gerektirir.
+       Modüller (IModule) Application katmanında kayıt + uç eşlemesi sözleşmesini paylaşır. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ContentHub.BuildingBlocks.Domain\ContentHub.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+</Project>

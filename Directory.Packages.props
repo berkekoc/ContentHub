@@ -1,0 +1,60 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!--
+    NOTE (DOĞRULANMADI): Sürümler .NET 10 GA hattına göre seçildi. `dotnet restore`
+    sırasında bir paket sürümü bulunamazsa, en yakın kararlı sürüme çekin
+    (özellikle EF Core / Npgsql 10.x ve test paketleri). MediatR, lisans notu
+    gereği 12.x (Apache-2.0) hattına SABİTLENMİŞTİR; 13+ ücretli sürüme geçmeyin.
+  -->
+  <ItemGroup>
+    <!-- Mediator (Apache-2.0, son ücretsiz hat) -->
+    <PackageVersion Include="MediatR" Version="12.4.1" />
+
+    <!-- Validation (Apache-2.0) -->
+    <PackageVersion Include="FluentValidation" Version="11.11.0" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+
+    <!-- EF Core + Npgsql (PostgreSQL License) -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="Npgsql" Version="10.0.0" />
+    <!-- Dolaylı bağımlılık; NU1903 (9.0.0) için yamalı sürüme sabitlenir -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.0" />
+
+    <!-- Resilience (Polly v8, MIT) -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+
+    <!-- Caching (MIT) -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
+
+    <!-- Hosting / DI abstractions used by BuildingBlocks -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0" />
+
+    <!-- OpenAPI + Scalar (MIT) -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.6.9" />
+
+    <!-- Architecture tests (MIT) -->
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+
+    <!-- Test stack (Apache-2.0 / MIT) -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.3.0" />
+    <PackageVersion Include="WireMock.Net" Version="1.7.4" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+  </ItemGroup>
+</Project>
