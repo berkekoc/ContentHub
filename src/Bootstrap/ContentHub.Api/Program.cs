@@ -9,8 +9,18 @@ using ContentHub.Modules.ContentSearch.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Scalar.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = Directory.GetCurrentDirectory()
+});
 
+builder.Configuration.Sources.Clear();
+builder.Configuration
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables();
 // --- Modülleri keşfet (modüler monolit) ---
 var modules = ModuleRegistrar.DiscoverModules(typeof(ContentSearchModule).Assembly);
 
