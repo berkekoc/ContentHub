@@ -1,4 +1,4 @@
-# ContentHub — Çok Sağlayıcılı İçerik Arama ve Puanlama Servisi
+# ContentHub: Çok Sağlayıcılı İçerik Arama ve Puanlama Servisi
 
 Farklı biçimlerde (JSON ve XML) veri sunan içerik sağlayıcılarını tek bir arama deneyiminde
 birleştiren .NET 10 Web API'si ve üzerindeki Next.js panosu. Kullanıcı sağlayıcı ayrımını görmez;
@@ -12,7 +12,7 @@ Proje spec-driven bir süreçle geliştirildi; tasarım dokümanları `docs/spdd
 
 - API + doküman (Scalar): https://contenthub-e7xi.onrender.com/scalar
 - Sağlık: https://contenthub-e7xi.onrender.com/health
-- Pano: `https://<vercel-adresin>.vercel.app`  *(buraya Vercel adresini koy)*
+- Pano: https://content-hub-sable.vercel.app
 
 Render ücretsiz katmanda uyuduğu için ilk istek birkaç saniye gecikebilir; pano açılışta `/health`
 ile servisi uyandırır. Veri, açılışta case'in sağladığı WEG uçlarından otomatik çekilir.
