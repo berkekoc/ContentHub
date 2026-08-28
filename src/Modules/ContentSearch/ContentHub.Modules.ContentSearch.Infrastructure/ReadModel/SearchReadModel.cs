@@ -1,4 +1,5 @@
 using System.Data;
+using System.Linq;
 using ContentHub.BuildingBlocks.Application.Models;
 using ContentHub.Modules.ContentSearch.Application.Abstractions;
 using ContentHub.Modules.ContentSearch.Application.Contracts;
@@ -46,12 +47,12 @@ internal sealed class SearchReadModel : ISearchReadModel
                              WHEN ci.published_at >= @now - interval '3 months' THEN 1
                              ELSE 0
                            END AS final_score,
-                       CASE WHEN @keyword IS NULL THEN 0
-                            ELSE ts_rank(ci.search_vector, websearch_to_tsquery('{config}', @keyword))
+                       CASE WHEN @tsquery IS NULL THEN 0
+                            ELSE ts_rank(ci.search_vector, to_tsquery('{config}', @tsquery))
                        END AS relevance
                 FROM content_search.content_items ci
                 JOIN content_search.content_scores cs ON cs.content_item_id = ci.id
-                WHERE (@keyword IS NULL OR ci.search_vector @@ websearch_to_tsquery('{config}', @keyword))
+                WHERE (@tsquery IS NULL OR ci.search_vector @@ to_tsquery('{config}', @tsquery))
                   AND (@contentType IS NULL OR ci.content_type = @contentType)
             )";
 
@@ -141,12 +142,37 @@ internal sealed class SearchReadModel : ISearchReadModel
         }
     }
 
+    /// <summary>
+    /// Anahtar kelimeyi PREFIX (önek) tsquery'sine çevirir: her terim sanitize edilip ':*' ile
+    /// aranır (ör. "clea" → clean, "API" → apis). Böylece kısmi/yazarken arama boş dönmez.
+    /// Yalnız harf/rakam korunur; tsquery meta-karakteri sızmaz (güvenli). Terim yoksa null → tümü.
+    /// </summary>
+    private static string? BuildPrefixTsQuery(string? keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return null;
+        }
+
+        var terms = new List<string>();
+        foreach (var raw in keyword.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var cleaned = new string(raw.Where(char.IsLetterOrDigit).ToArray());
+            if (cleaned.Length > 0)
+            {
+                terms.Add(cleaned.ToLowerInvariant() + ":*");
+            }
+        }
+
+        return terms.Count == 0 ? null : string.Join(" & ", terms);
+    }
+
     private static void AddFilterParameters(NpgsqlCommand command, SearchCriteria criteria, DateTimeOffset now)
     {
         command.Parameters.Add(new NpgsqlParameter("now", NpgsqlDbType.TimestampTz) { Value = now });
-        command.Parameters.Add(new NpgsqlParameter("keyword", NpgsqlDbType.Text)
+        command.Parameters.Add(new NpgsqlParameter("tsquery", NpgsqlDbType.Text)
         {
-            Value = (object?)criteria.Keyword ?? DBNull.Value,
+            Value = (object?)BuildPrefixTsQuery(criteria.Keyword) ?? DBNull.Value,
         });
         command.Parameters.Add(new NpgsqlParameter("contentType", NpgsqlDbType.Smallint)
         {

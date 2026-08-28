@@ -15,6 +15,13 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     ContentRootPath = Directory.GetCurrentDirectory()
 });
 
+// Render/Cloud: platformun enjekte ettiği PORT'a bağlan (yoksa ASPNETCORE_URLS / 8080).
+var listenPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(listenPort))
+{
+    builder.WebHost.UseUrls($"http://+:{listenPort}");
+}
+
 builder.Configuration.Sources.Clear();
 builder.Configuration
     .SetBasePath(AppContext.BaseDirectory)
