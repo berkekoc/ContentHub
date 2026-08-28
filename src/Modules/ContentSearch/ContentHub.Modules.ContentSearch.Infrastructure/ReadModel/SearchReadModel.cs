@@ -39,7 +39,7 @@ internal sealed class SearchReadModel : ISearchReadModel
         // matched: filtre + okuma-anı final_score + relevance. keyword null → tümü.
         var matchedCte =
             $@"matched AS (
-                SELECT ci.id, ci.title, ci.description, ci.content_type, ci.published_at, ci.fingerprint,
+                SELECT ci.id, ci.provider_id, ci.title, ci.description, ci.content_type, ci.published_at, ci.fingerprint,
                        cs.persistent_score
                          + CASE
                              WHEN ci.published_at >= @now - interval '7 days'  THEN 5
@@ -68,7 +68,7 @@ internal sealed class SearchReadModel : ISearchReadModel
         var pageSql =
             $@"WITH {matchedCte},
             groups AS (
-                SELECT fingerprint, COUNT(*) AS provider_count FROM matched GROUP BY fingerprint
+                SELECT fingerprint, COUNT(DISTINCT provider_id) AS provider_count FROM matched GROUP BY fingerprint
             ),
             reps AS (
                 SELECT DISTINCT ON (m.fingerprint)

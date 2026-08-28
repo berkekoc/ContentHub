@@ -11,14 +11,21 @@ internal sealed class ContentRepository : IContentRepository
 
     public ContentRepository(ContentSearchDbContext db) => _db = db;
 
-    public Task<ContentItem?> GetByNaturalKeyAsync(
+    public async Task<ContentItem?> GetByNaturalKeyAsync(
         Guid providerId,
         ExternalId externalId,
         CancellationToken cancellationToken = default)
-        => _db.ContentItems
-            .FirstOrDefaultAsync(
-                c => c.ProviderId == providerId && c.ExternalId == externalId,
-                cancellationToken);
+    {
+        // Doğal anahtar (idempotency, İHLAL-EDİLEMEZ): ProviderId SQL'de filtrelenir; ExternalId
+        // bir value object olup özel '==' operatörü taşıdığından SQL'e çevrilemez — bu yüzden
+        // BELLEKTE eşleştirilir. Sağlayıcı başına kayıt sayısı küçük (case ölçeği), güvenli/determinist.
+        var candidates = await _db.ContentItems
+            .Where(c => c.ProviderId == providerId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return candidates.FirstOrDefault(c => c.ExternalId == externalId);
+    }
 
     public Task<ContentItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => _db.ContentItems.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
