@@ -108,22 +108,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Yerel/demo kolaylığı: şemayı modelden kur (üretimde `dotnet ef database update`).
-if (app.Configuration.GetValue<bool>("ContentHub:InitializeDatabase"))
+// Veritabanı şeması + WEG sağlayıcı seed'i, port BAĞLANDIKTAN SONRA arka planda yapılır.
+// Böylece Supabase yavaş/askıda olsa bile Kestrel portu hemen açar (Render port tespiti)
+// ve deploy "no open ports" ile düşmez. Hata olursa loglanır, süreç ölmez.
+app.Lifetime.ApplicationStarted.Register(() => _ = Task.Run(async () =>
 {
-    await app.Services.InitializeDatabaseAsync();
-}
+    try
+    {
+        if (app.Configuration.GetValue<bool>("ContentHub:InitializeDatabase"))
+        {
+            await app.Services.InitializeDatabaseAsync();
+        }
 
-// Yapılandırmadaki WEG sağlayıcılarını (provider1 JSON, provider2 XML) idempotent seed et
-// → taze veritabanında demo açılışta hazır gelir; zamanlanmış/manuel çekim veriyi doldurur.
-try
-{
-    await app.Services.SeedProvidersAsync(app.Configuration);
-}
-catch (Exception seedEx)
-{
-    app.Logger.LogWarning(seedEx, "Sağlayıcı seed adımı atlandı (veritabanı henüz hazır olmayabilir).");
-}
+        await app.Services.SeedProvidersAsync(app.Configuration);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Başlangıç veritabanı/seed adımı başarısız (uygulama yine ayakta).");
+    }
+}));
 
 app.UseExceptionHandler();
 app.UseCors();
