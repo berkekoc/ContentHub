@@ -25,7 +25,7 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageVersion Include="Npgsql" Version="10.0.0" />
     <!-- Dolaylı bağımlılık; NU1903 (9.0.0) için yamalı sürüme sabitlenir -->
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.0" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
 
     <!-- Resilience (Polly v8, MIT) -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
@@ -44,6 +44,8 @@
     <!-- OpenAPI + Scalar (MIT) -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.6.9" />
+    <!-- Eklenen: Microsoft.OpenApi - transitive dependency olarak doğrudan promoteleniyor -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
 
     <!-- Architecture tests (MIT) -->
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
