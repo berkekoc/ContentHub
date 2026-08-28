@@ -36,31 +36,32 @@ internal sealed class SearchReadModel : ISearchReadModel
     {
         var config = _options.TextSearchConfig;
 
-        // matched: filtre + okuma-anı final_score + relevance. keyword null → tümü.
         var matchedCte =
             $@"matched AS (
-                SELECT ci.id, ci.provider_id, ci.title, ci.description, ci.content_type, ci.published_at, ci.fingerprint,
-                       cs.persistent_score
-                         + CASE
-                             WHEN ci.published_at >= @now - interval '7 days'  THEN 5
-                             WHEN ci.published_at >= @now - interval '1 month' THEN 3
-                             WHEN ci.published_at >= @now - interval '3 months' THEN 1
-                             ELSE 0
-                           END AS final_score,
-                       CASE WHEN @tsquery IS NULL THEN 0
-                            ELSE ts_rank(ci.search_vector, to_tsquery('{config}', @tsquery), 1)  -- 1 = uzunluk normalizasyonu: kısa/yoğun başlık üste
-                       END AS relevance
-                FROM content_search.content_items ci
-                JOIN content_search.content_scores cs ON cs.content_item_id = ci.id
-                WHERE (@tsquery IS NULL OR ci.search_vector @@ to_tsquery('{config}', @tsquery))
-                  AND (@contentType IS NULL OR ci.content_type = @contentType)
-            )";
+        SELECT ci.id, ci.provider_id, ci.title, ci.description, ci.content_type, ci.published_at, ci.fingerprint,
+               cs.persistent_score
+                 + CASE
+                     WHEN ci.published_at >= @now - interval '7 days'  THEN 5
+                     WHEN ci.published_at >= @now - interval '1 month' THEN 3
+                     WHEN ci.published_at >= @now - interval '3 months' THEN 1
+                     ELSE 0
+                   END AS final_score,
+               CASE WHEN @tsquery IS NULL THEN 0
+                    ELSE ts_rank(ci.search_vector, to_tsquery('{config}', @tsquery), 1)
+                         -- Aranan kelime başlığın EN BAŞINDAYSA 0.2 bonus puan ekle
+                         + CASE WHEN ci.title ILIKE @rawKeyword || '%' THEN 0.2 ELSE 0 END
+               END AS relevance
+        FROM content_search.content_items ci
+        JOIN content_search.content_scores cs ON cs.content_item_id = ci.id
+        WHERE (@tsquery IS NULL OR ci.search_vector @@ to_tsquery('{config}', @tsquery))
+          AND (@contentType IS NULL OR ci.content_type = @contentType)
+    )";
 
         var orderBy = criteria.Sort switch
         {
-            SortOption.Relevance => "r.relevance DESC, r.id ASC",
-            
-            _ => "r.final_score DESC, r.id ASC", // Popularity
+            // Eşitlik durumunda rastgele ID yerine önce final_score'a bak
+            SortOption.Relevance => "r.relevance DESC, r.final_score DESC, r.id ASC",
+            _ => "r.final_score DESC, r.id ASC",// Popularity
         };
 
         var offset = (criteria.Page - 1) * criteria.PageSize;
@@ -173,6 +174,11 @@ internal sealed class SearchReadModel : ISearchReadModel
         command.Parameters.Add(new NpgsqlParameter("tsquery", NpgsqlDbType.Text)
         {
             Value = (object?)BuildPrefixTsQuery(criteria.Keyword) ?? DBNull.Value,
+        });
+        // Yeni eklenen ham kelime parametresi
+        command.Parameters.Add(new NpgsqlParameter("rawKeyword", NpgsqlDbType.Text)
+        {
+            Value = (object?)criteria.Keyword ?? DBNull.Value,
         });
         command.Parameters.Add(new NpgsqlParameter("contentType", NpgsqlDbType.Smallint)
         {
