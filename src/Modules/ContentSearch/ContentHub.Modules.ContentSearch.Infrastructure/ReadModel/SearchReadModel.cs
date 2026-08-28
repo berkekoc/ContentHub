@@ -48,7 +48,7 @@ internal sealed class SearchReadModel : ISearchReadModel
                              ELSE 0
                            END AS final_score,
                        CASE WHEN @tsquery IS NULL THEN 0
-                            ELSE ts_rank(ci.search_vector, to_tsquery('{config}', @tsquery))
+                            ELSE ts_rank(ci.search_vector, to_tsquery('{config}', @tsquery), 1)  -- 1 = uzunluk normalizasyonu: kısa/yoğun başlık üste
                        END AS relevance
                 FROM content_search.content_items ci
                 JOIN content_search.content_scores cs ON cs.content_item_id = ci.id
