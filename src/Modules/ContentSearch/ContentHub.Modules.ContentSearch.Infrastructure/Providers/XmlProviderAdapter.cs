@@ -7,15 +7,26 @@ using Microsoft.Extensions.Logging;
 namespace ContentHub.Modules.ContentSearch.Infrastructure.Providers;
 
 /// <summary>
-/// XML sağlayıcı adaptörü (ACL). Bilinçle zorlaştırılmış şema: nitelikler (externalId, kind),
-/// iç içe &lt;stats&gt;, farklı alan adları ve farklı tarih biçimleri (dd.MM.yyyy | yyyy-MM-dd).
-/// System.Xml.* yalnızca burada (Infrastructure/Providers) — biçim domain'e sızmaz.
+/// XML sağlayıcı adaptörü (ACL) — WEG "provider2" sözleşmesi.
+/// <![CDATA[
+///   <feed>
+///     <meta><total_count/><current_page/><items_per_page/></meta>
+///     <item>
+///       <id/><headline/><type>video|article</type>
+///       <stats> video: views,likes,duration | article: reading_time,reactions,comments </stats>
+///       <publication_date>yyyy-MM-dd</publication_date>
+///       <categories><category/></categories>
+///     </item>
+///   </feed>
+/// ]]>
+/// System.Xml.* YALNIZCA burada (Infrastructure/Providers) kullanılır — biçim domain'e sızmaz
+/// (CLAUDE.md kuralı 1, ArchTest kuralı 4).
 /// </summary>
 internal sealed class XmlProviderAdapter : ProviderAdapterBase
 {
     private static readonly string[] DateFormats =
     {
-        "dd.MM.yyyy", "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ssZ", "o",
+        "yyyy-MM-dd", "dd.MM.yyyy", "yyyy-MM-ddTHH:mm:ssZ", "o",
     };
 
     private readonly ILogger<XmlProviderAdapter> _logger;
@@ -35,7 +46,8 @@ internal sealed class XmlProviderAdapter : ProviderAdapterBase
         }
 
         var results = new List<FetchedContent>();
-        foreach (var node in root.Elements("content"))
+        // <item> düğümleri feed altında; içeriğe konumdan bağımsız eriş.
+        foreach (var node in root.Descendants("item"))
         {
             try
             {
@@ -52,12 +64,15 @@ internal sealed class XmlProviderAdapter : ProviderAdapterBase
 
     private static FetchedContent MapItem(XElement node)
     {
-        var externalId = (string?)node.Attribute("externalId") ?? throw new FormatException("externalId yok");
-        var type = ParseKind((string?)node.Attribute("kind"));
-        var title = (string?)node.Element("heading") ?? throw new FormatException("heading yok");
-        var description = (string?)node.Element("summary");
-        var publishedAt = ParseDate((string?)node.Element("released"));
-        var sourceUrl = (string?)node.Element("link");
+        // externalId hem <id> öğesi hem de eski 'externalId' niteliği olarak kabul edilir.
+        var externalId = Value(node, "id")
+            ?? (string?)node.Attribute("externalId")
+            ?? throw new FormatException("id yok");
+        var type = ParseType(Value(node, "type") ?? (string?)node.Attribute("kind"));
+        var title = Value(node, "headline") ?? Value(node, "title") ?? throw new FormatException("headline yok");
+        var description = Value(node, "summary") ?? Value(node, "description");
+        var publishedAt = ParseDate(Value(node, "publication_date") ?? Value(node, "released"));
+        var sourceUrl = Value(node, "link") ?? Value(node, "url");
 
         var stats = node.Element("stats");
         long? views = null, likes = null, reactions = null;
@@ -66,25 +81,31 @@ internal sealed class XmlProviderAdapter : ProviderAdapterBase
         {
             if (type == ContentType.Video)
             {
-                views = ParseLong(stats.Element("viewCount"));
-                likes = ParseLong(stats.Element("likeCount"));
+                views = ParseLong(stats.Element("views") ?? stats.Element("viewCount"));
+                likes = ParseLong(stats.Element("likes") ?? stats.Element("likeCount"));
             }
             else
             {
-                readingTime = (int?)ParseLong(stats.Element("minutes"));
-                reactions = ParseLong(stats.Element("reactionCount"));
+                readingTime = (int?)ParseLong(stats.Element("reading_time") ?? stats.Element("minutes"));
+                reactions = ParseLong(stats.Element("reactions") ?? stats.Element("reactionCount"));
             }
         }
 
         return new FetchedContent(externalId, title, description, type, publishedAt, sourceUrl, views, likes, readingTime, reactions);
     }
 
-    private static ContentType ParseKind(string? raw)
+    private static string? Value(XElement parent, string name)
+    {
+        var element = parent.Element(name);
+        return element is null ? null : element.Value?.Trim();
+    }
+
+    private static ContentType ParseType(string? raw)
         => raw?.Trim().ToLowerInvariant() switch
         {
             "video" => ContentType.Video,
-            "text" => ContentType.Text,
-            _ => throw new FormatException($"Bilinmeyen kind: {raw}"),
+            "article" or "text" => ContentType.Text,
+            _ => throw new FormatException($"Bilinmeyen tür: {raw}"),
         };
 
     private static long? ParseLong(XElement? element)
@@ -96,7 +117,7 @@ internal sealed class XmlProviderAdapter : ProviderAdapterBase
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new FormatException("released yok");
+            throw new FormatException("publication_date yok");
         }
 
         raw = raw.Trim();

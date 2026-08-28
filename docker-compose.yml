@@ -1,10 +1,9 @@
 # Yerelde uçtan uca: postgres + redis + mock sağlayıcılar + api tek komutla.
 #   docker compose up --build
 # Sonra:
-#   ApiKey = dev-local-api-key-change-me
-#   1) Sağlayıcıları tanımla (aşağıdaki README'deki curl'ler)
-#   2) POST /api/fetch ile çek
-#   3) GET /api/search?keyword=... ile ara ; /scalar dokümanı
+#   WEG sağlayıcıları (provider1 JSON / provider2 XML) OTOMATİK seed edilir ve scheduler
+#   açılıştan ~15 sn sonra çeker → dashboard kendiliğinden dolar.
+#   Elle: POST /api/fetch (ApiKey: dev-local-api-key-change-me) ; GET /api/search?keyword=go ; /scalar
 services:
   postgres:
     image: postgres:16-alpine
@@ -51,7 +50,8 @@ services:
       ConnectionStrings__Redis: "redis:6379"
       ContentHub__ApiKey: "dev-local-api-key-change-me"
       ContentHub__InitializeDatabase: "true"
-      ContentSearch__Scheduler__Enabled: "false"
+      ContentSearch__Scheduler__Enabled: "true"
+      ContentSearch__Scheduler__InitialDelay: "00:00:15"
     ports:
       - "8080:8080"
 

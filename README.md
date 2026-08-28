@@ -31,7 +31,7 @@ Build plan'daki icra sırası **O1→O13**'ün "pazarlık dışı çekirdek + y�
 | O5 | Persistence (DbContext, konfig, snake_case, enum→smallint, tsvector/GIN/unique) | ✅ |
 | O6 | Provider entegrasyonu (JSON/XML adaptör ACL, Polly resilience, giden limit, idempotent upsert) | ✅ |
 | O7 | Search okuma modeli (ham SQL: FTS + güncellik + dedup + 3 sıralama + offset) | ✅ |
-| O8 | Mock sağlayıcılar (JSON+XML) + seed (kopya + bozuk kayıt) — **Node ile çalıştığı doğrulandı** | ✅ |
+| O8 | **Veri kaynağı: case'in verdiği WEG uçları** (provider1 JSON / provider2 XML) tüketilir; kendi `mock-providers/`'ımız offline/CI test double'ı olarak korunur (kopya + bozuk kayıt senaryoları) | ✅ |
 | O9 | Api host (uçlar, ApiKey, ProblemDetails, gelen limit, OpenAPI/Scalar, /health) | ✅ |
 | O10 | Cache (sürüm-jetonu) + zamanlanmış çekim | ✅ |
 | O11 | Entegrasyon testleri (Testcontainers/WireMock) + 7 ArchTest + "yasak ad" taraması | ✅ (kod) |
@@ -77,30 +77,44 @@ docker compose up --build
 # API:      http://localhost:8080
 # Doküman:  http://localhost:8080/scalar
 # Sağlık:   http://localhost:8080/health
-# Mock:     http://localhost:4010/api/json , /api/xml
+# (Yerel mock-providers = offline/CI test double'ı; CANLI veri case'in WEG uçlarından gelir)
 ```
 
 `ContentHub__InitializeDatabase=true` compose'da şemayı modelden kurar (demo kolaylığı).
 
-### Uçtan uca demo
+### Veri kaynağı & uçtan uca demo
+
+Case'in verdiği iki WEG ucu **yapılandırmadan (`ContentSearch:Providers`) otomatik seed edilir**:
+
+- `.../v2/provider1` → JSON (video: `views/likes`)
+- `.../v2/provider2` → XML (video: `views/likes`, article: `reading_time/reactions`)
+
+Zamanlanmış çekim açılıştan ~15 sn sonra çalışır → **dashboard kendiliğinden dolu gelir**. Taze bir
+veritabanında (`docker compose up` ya da sıfırdan Postgres) şema modelden kurulur, sağlayıcılar seed
+edilir, veri WEG uçlarından çekilir. Elle tetiklemek / gözlemlemek için:
 
 ```bash
 KEY="dev-local-api-key-change-me"
 
-# 1) İki sağlayıcı tanımla (mock uçlarına yönlendir)
-curl -X POST http://localhost:8080/api/providers -H "X-Api-Key: $KEY" -H "Content-Type: application/json" \
-  -d '{"name":"JSON Kaynak","format":0,"baseUrl":"http://mock-providers:4010/api/json"}'
-curl -X POST http://localhost:8080/api/providers -H "X-Api-Key: $KEY" -H "Content-Type: application/json" \
-  -d '{"name":"XML Kaynak","format":1,"baseUrl":"http://mock-providers:4010/api/xml"}'
-
-# 2) Çekimi tetikle (tüm sağlayıcılar)
+# Çekimi elle tetikle (WEG uçları → kanonik model, idempotent upsert)
 curl -X POST http://localhost:8080/api/fetch -H "X-Api-Key: $KEY"
 
-# 3) Ara (açık uç): popülerlik | alakalılık | hybrid
-curl "http://localhost:8080/api/search?keyword=arama&sort=0&page=1&pageSize=10"
+# Çekim çalıştırmalarını gözlemle (yeni/güncellenen sayısı = idempotency kanıtı)
+curl "http://localhost:8080/api/fetch-runs" -H "X-Api-Key: $KEY"
+
+# Ara (açık uç): popülerlik | alakalılık | hybrid
+curl "http://localhost:8080/api/search?keyword=go&sort=0&page=1&pageSize=10"
+
+# Genişletilebilirlik kanıtı: 3. sağlayıcıyı çekirdek kurala dokunmadan ekle
+curl -X POST http://localhost:8080/api/providers -H "X-Api-Key: $KEY" -H "Content-Type: application/json" \
+  -d '{"name":"Ekstra Kaynak","format":0,"baseUrl":"https://.../provider1"}'
 ```
 
 `format`: 0=JSON, 1=XML. `sort`: 0=Popülerlik, 1=Alakalılık, 2=Hybrid.
+
+> **Tekilleştirme notu:** WEG veri kümelerinde sağlayıcılar-arası kopya YOKTUR; bu yüzden dedup
+> (parmak izi + en yüksek skorlu temsilci) **entegrasyon/birim testleriyle** kanıtlanır (WireMock'ta
+> kasıtlı kopyalar). `mock-providers/` klasörü bu offline testler ve zengin yerel demo için korunur.
 
 ### Dashboard (Next.js)
 

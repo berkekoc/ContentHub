@@ -107,6 +107,17 @@ if (app.Configuration.GetValue<bool>("ContentHub:InitializeDatabase"))
     await app.Services.InitializeDatabaseAsync();
 }
 
+// Yapılandırmadaki WEG sağlayıcılarını (provider1 JSON, provider2 XML) idempotent seed et
+// → taze veritabanında demo açılışta hazır gelir; zamanlanmış/manuel çekim veriyi doldurur.
+try
+{
+    await app.Services.SeedProvidersAsync(app.Configuration);
+}
+catch (Exception seedEx)
+{
+    app.Logger.LogWarning(seedEx, "Sağlayıcı seed adımı atlandı (veritabanı henüz hazır olmayabilir).");
+}
+
 app.UseExceptionHandler();
 app.UseCors();
 app.UseRateLimiter();

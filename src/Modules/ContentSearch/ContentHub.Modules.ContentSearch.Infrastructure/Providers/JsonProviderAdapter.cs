@@ -7,8 +7,11 @@ using Microsoft.Extensions.Logging;
 namespace ContentHub.Modules.ContentSearch.Infrastructure.Providers;
 
 /// <summary>
-/// JSON sağlayıcı adaptörü (ACL). System.Text.Json YALNIZCA burada (Infrastructure/Providers)
-/// kullanılır — biçim domain'e sızmaz (CLAUDE.md kuralı 1, ArchTest kuralı 4).
+/// JSON sağlayıcı adaptörü (ACL) — WEG "provider1" sözleşmesi.
+/// Zarf: { "contents": [ { id, title, type, metrics{ views, likes, duration }, published_at, tags[] } ], "pagination": {...} }
+/// Geriye dönük tolerans: "items" zarfı, "publishedAt" ve "readingTime" alan adları da kabul edilir.
+/// System.Text.Json YALNIZCA burada (Infrastructure/Providers) kullanılır — biçim domain'e sızmaz
+/// (CLAUDE.md kuralı 1, ArchTest kuralı 4).
 /// </summary>
 internal sealed class JsonProviderAdapter : ProviderAdapterBase
 {
@@ -23,9 +26,20 @@ internal sealed class JsonProviderAdapter : ProviderAdapterBase
     protected override IReadOnlyList<FetchedContent> ParsePage(string payload, Provider provider)
     {
         using var document = JsonDocument.Parse(payload);
-        if (!document.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+        var root = document.RootElement;
+
+        JsonElement items;
+        if (!(root.TryGetProperty("contents", out items) && items.ValueKind == JsonValueKind.Array)
+            && !(root.TryGetProperty("items", out items) && items.ValueKind == JsonValueKind.Array))
         {
-            return Array.Empty<FetchedContent>();
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                items = root;
+            }
+            else
+            {
+                return Array.Empty<FetchedContent>();
+            }
         }
 
         var results = new List<FetchedContent>();
@@ -51,8 +65,8 @@ internal sealed class JsonProviderAdapter : ProviderAdapterBase
         var title = GetString(element, "title") ?? throw new FormatException("title yok");
         var description = GetString(element, "description");
         var type = ParseType(GetString(element, "type"));
-        var publishedAt = ParseDate(GetString(element, "publishedAt"));
-        var sourceUrl = GetString(element, "url");
+        var publishedAt = ParseDate(GetString(element, "published_at") ?? GetString(element, "publishedAt"));
+        var sourceUrl = GetString(element, "url") ?? GetString(element, "source_url");
 
         long? views = null, likes = null, reactions = null;
         int? readingTime = null;
@@ -65,7 +79,7 @@ internal sealed class JsonProviderAdapter : ProviderAdapterBase
             }
             else
             {
-                readingTime = (int?)GetLong(metrics, "readingTime");
+                readingTime = (int?)(GetLong(metrics, "reading_time") ?? GetLong(metrics, "readingTime"));
                 reactions = GetLong(metrics, "reactions");
             }
         }
@@ -97,7 +111,7 @@ internal sealed class JsonProviderAdapter : ProviderAdapterBase
         => raw?.Trim().ToLowerInvariant() switch
         {
             "video" => ContentType.Video,
-            "text" => ContentType.Text,
+            "article" or "text" => ContentType.Text,
             _ => throw new FormatException($"Bilinmeyen tür: {raw}"),
         };
 
