@@ -1,4 +1,4 @@
-# ContentHub — Çok Sağlayıcılı İçerik Arama ve Puanlama Servisi
+# ContentHub: Çok Sağlayıcılı İçerik Arama ve Puanlama Servisi
 
 Farklı biçimlerde (JSON ve XML) veri sunan içerik sağlayıcılarını tek bir arama deneyiminde
 birleştiren .NET 10 Web API'si ve üzerindeki Next.js panosu. Kullanıcı sağlayıcı ayrımını görmez;
