@@ -1,7 +1,7 @@
 # ContentHub Dashboard (Next.js + TypeScript)
 
 `GET /api/search`'ü tüketen basit arama arayüzü (Kanvas O12 / R10):
-anahtar kelime, tür filtresi, sıralama seçici (Popülerlik/Alakalılık/Hybrid), offset sayfalama;
+anahtar kelime, tür filtresi, sıralama seçici (Popülerlik/Alakalılık), offset sayfalama;
 her sonuç **Başlık · İçerik Türü · Skor**; kopya içerik "N sağlayıcıda mevcut" rozetiyle; bonus
 "skor neden?" açıklaması (`/api/content/{id}/score`); açılışta `/health` uyandırma yoklaması.
 

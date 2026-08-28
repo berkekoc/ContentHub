@@ -123,11 +123,9 @@ export default function HomePage() {
         <select
           value={String(sort)}
           onChange={(e) => setSort(Number(e.target.value) as SortOption)}
-          aria-label="Sıralama"
-        >
+          aria-label="Sıralama"    >
           <option value={String(SortOption.Popularity)}>Popülerlik</option>
           <option value={String(SortOption.Relevance)}>Alakalılık</option>
-          <option value={String(SortOption.Hybrid)}>Hybrid</option>
         </select>
         <button type="submit" disabled={loading}>
           {loading ? "Aranıyor…" : "Ara"}

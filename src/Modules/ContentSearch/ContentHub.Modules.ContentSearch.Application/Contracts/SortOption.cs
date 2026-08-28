@@ -5,5 +5,5 @@ public enum SortOption
 {
     Popularity = 0,
     Relevance = 1,
-    Hybrid = 2,
+ 
 }

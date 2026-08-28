@@ -59,7 +59,7 @@ internal sealed class SearchReadModel : ISearchReadModel
         var orderBy = criteria.Sort switch
         {
             SortOption.Relevance => "r.relevance DESC, r.id ASC",
-            SortOption.Hybrid => "(@wRel * r.relevance + @wPop * (r.final_score / @scale)) DESC, r.id ASC",
+            
             _ => "r.final_score DESC, r.id ASC", // Popularity
         };
 

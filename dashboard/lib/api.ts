@@ -14,7 +14,6 @@ export enum ContentType {
 export enum SortOption {
   Popularity = 0,
   Relevance = 1,
-  Hybrid = 2,
 }
 
 export interface ContentItemDto {
@@ -67,8 +66,6 @@ export function sortLabel(sort: SortOption): string {
   switch (sort) {
     case SortOption.Relevance:
       return "Alakalılık";
-    case SortOption.Hybrid:
-      return "Hybrid";
     default:
       return "Popülerlik";
   }
