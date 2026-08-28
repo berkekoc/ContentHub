@@ -1,5 +1,6 @@
 using ContentHub.Modules.ContentSearch.Application.Abstractions;
 using ContentHub.Modules.ContentSearch.Domain.Model;
+using ContentHub.Modules.ContentSearch.Infrastructure.BackgroundProcessing;
 using ContentHub.Modules.ContentSearch.Infrastructure.Caching;
 using ContentHub.Modules.ContentSearch.Infrastructure.Persistence;
 using ContentHub.Modules.ContentSearch.Infrastructure.Persistence.Repositories;
@@ -63,6 +64,10 @@ public static class DependencyInjection
         // --- Zamanlanmış çekim ---
         services.AddHostedService<FetchSchedulerBackgroundService>();
 
+        // --- In-process arka plan iş kuyruğu: manuel çekim tetikleme HTTP'yi bloklamaz (202) ---
+        services.AddSingleton<IBackgroundTaskQueue>(_ => new BackgroundTaskQueue(capacity: 100));
+        services.AddHostedService<QueuedHostedService>();
+
         return services;
     }
 
@@ -110,7 +115,7 @@ public static class DependencyInjection
                 continue;
             }
 
-            var exists = await db.Providers.AnyAsync(p => p.Name == entry.Name);
+            var exists = await db.Providers.AnyAsync(p => p.Name == entry.Name || p.BaseUrl == entry.BaseUrl);
             if (exists)
             {
                 continue;

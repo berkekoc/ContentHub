@@ -1,10 +1,12 @@
 using ContentHub.BuildingBlocks.Application.Models;
+using ContentHub.Modules.ContentSearch.Application.Abstractions;
 using ContentHub.Modules.ContentSearch.Application.Contracts;
 using ContentHub.Modules.ContentSearch.Application.Ingest.DefineProvider;
 using ContentHub.Modules.ContentSearch.Application.Ingest.ListFetchRuns;
 using ContentHub.Modules.ContentSearch.Application.Ingest.TriggerFetch;
 using ContentHub.Modules.ContentSearch.Endpoints.Contracts;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -34,14 +36,25 @@ internal static class IngestEndpoints
             .WithSummary("Yeni sağlayıcı tanımlar (korumalı).");
     }
 
-    private static async Task<Ok<FetchSummaryDto>> TriggerFetchAsync(
-        ISender sender,
+    private static async Task<Accepted<FetchQueuedResponse>> TriggerFetchAsync(
+        IBackgroundTaskQueue queue,
         Guid? providerId,
         CancellationToken cancellationToken)
     {
-        var summary = await sender.Send(new TriggerFetchCommand(providerId), cancellationToken);
-        return TypedResults.Ok(summary);
+        // Çekim uzun sürebilir → HTTP isteğini bloklamadan arka plan kuyruğuna al (202 Accepted).
+        // İş, tüketicinin açtığı taze DI kapsamında AYNI idempotent TriggerFetchCommand'i çalıştırır.
+        // İlerleme GET /api/fetch-runs ile izlenir.
+        await queue.EnqueueAsync(
+            (serviceProvider, ct) =>
+                serviceProvider.GetRequiredService<ISender>().Send(new TriggerFetchCommand(providerId), ct),
+            cancellationToken);
+
+        return TypedResults.Accepted(
+            "/api/fetch-runs",
+            new FetchQueuedResponse("Çekim kuyruğa alındı; ilerleme /api/fetch-runs üzerinden izlenir."));
     }
+
+    private sealed record FetchQueuedResponse(string Message);
 
     private static async Task<Ok<PagedResult<FetchRunDto>>> ListFetchRunsAsync(
         ISender sender,
